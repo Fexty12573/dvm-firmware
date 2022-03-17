@@ -19,7 +19,9 @@ public:
 
     enum class RxCommand : uint8_t {
         SetRangeMux = 0x00,
-        SetAutozero = 0x01
+        SetAutozero = 0x01,
+        SetRange = 0x02,
+        SetRefVoltage = 0x03
     };
 
     UART(Pins pins);
@@ -32,6 +34,7 @@ public:
     char read_char() const;
     RxCommand read_command() const;
     size_t read_str(char* buffer, size_t size) const;
+    float read_float() const;
 
     // Write Functions
     void write_command(TxCommand cmd) const;

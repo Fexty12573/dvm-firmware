@@ -11,25 +11,40 @@ void DigitalVoltmeter::communication() {
 
     const auto fill_command = [&dvm](UART::RxCommand cmd, char* buffer, size_t& count) -> bool {
         switch (cmd) {
-        case UART::RxCommand::SetRangeMux:
-        case UART::RxCommand::SetAutozero:
+        case UART::RxCommand::SetRangeMux: [[fallthrough]];
+        case UART::RxCommand::SetAutozero: [[fallthrough]];
+        case UART::RxCommand::SetRange:
             if (count == 1) {
                 return true;
             } else {
-                buffer[count] = dvm.m_uart.read_char();
-                count++;
-                return false;
+                break;
+            }
+        case UART::RxCommand::SetRefVoltage:
+            if (count == 4) {
+                return true;
+            } else {
+                break;
             }
         }
+
+        buffer[count] = dvm.m_uart.read_char();
+        count++;
+        return false;
     };
     const auto exec_command = [&dvm](UART::RxCommand cmd, char* buffer) {
         switch (cmd) {
         case UART::RxCommand::SetRangeMux:
             dvm.m_range_state.value = buffer[0];
             dvm.apply_range();
+            break;
         case UART::RxCommand::SetAutozero:
             dvm.set_autozero(buffer[0]);
             break;
+        case UART::RxCommand::SetRange:
+            dvm.set_range(static_cast<Range>(buffer[0]));
+            break;
+        case UART::RxCommand::SetRefVoltage:
+            dvm.m_vref = *reinterpret_cast<float*>(buffer);
         }
     };
     

@@ -3,6 +3,8 @@
 #include <pico/stdlib.h>
 #include <hardware/uart.h>
 
+#include <cmath>
+
 UART::UART(Pins pins) : m_pins(pins), m_inst(uart0) {
 }
 
@@ -33,6 +35,13 @@ size_t UART::read_str(char* buffer, size_t size) const {
     }
     
     return count;
+}
+
+float UART::read_float() const {
+    float val = 0;
+    const auto n = read_str(reinterpret_cast<char*>(&val), sizeof(val));
+
+    return n == sizeof(val) ? val : NAN;
 }
 
 void UART::write_command(TxCommand cmd) const {
