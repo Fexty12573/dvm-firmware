@@ -10,6 +10,16 @@ AD7177::AD7177(Pins pins)
 }
 
 void AD7177::initialize() {
+    gpio_init(m_pins.cs);
+    gpio_init(m_pins.din);
+    gpio_init(m_pins.dout);
+    gpio_init(m_pins.sclk);
+
+    gpio_set_dir(m_pins.cs, GPIO_OUT);
+    gpio_set_dir(m_pins.din, GPIO_OUT);
+    gpio_set_dir(m_pins.dout, GPIO_IN);
+    gpio_set_dir(m_pins.sclk, GPIO_OUT);
+
     gpio_put(m_pins.cs, false);
 
     write_register(
@@ -79,6 +89,8 @@ uint8_t AD7177::write_byte(uint8_t data, ShiftOrder order) {
             gpio_put(m_pins.sclk, true);
         }
     }
+
+    return 0;
 }
 
 uint8_t AD7177::read_byte() {
@@ -97,9 +109,12 @@ uint32_t AD7177::read_data() {
     uint32_t val = 0;
 
     for (auto i = 0u; i < 32; i++) {
-        gpio_put(m_pins.sclk, false);
+        // SCLK Pin auf Low setzen
+        gpio_put(m_pins.sclk, false); 
+        // DOUT Pin lesen, und Bit setzen/löschen
         val |= (static_cast<uint32_t>(gpio_get(m_pins.dout)) << i);
-        gpio_put(m_pins.sclk, true);
+        // SCLK Pin auf High setzen
+        gpio_put(m_pins.sclk, true); 
     }
 
     return val;

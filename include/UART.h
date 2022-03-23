@@ -34,11 +34,12 @@ public:
     char read_char() const;
     RxCommand read_command() const;
     size_t read_str(char* buffer, size_t size) const;
+    bool read_str_blocking(char* buffer, size_t count, uint64_t timout_us = -1) const;
     float read_float() const;
 
     // Write Functions
     void write_command(TxCommand cmd) const;
-    void write_str(char* buffer, size_t size) const;
+    void write_str(const char* buffer, size_t size) const;
     void write_float(float val) const;
 
 private:

@@ -22,7 +22,7 @@ class DigitalVoltmeter {
             uint8_t bit6 : 1;
             uint8_t bit7 : 1;
         };
-        uint8_t value;
+        uint8_t value; // Zugriff auf alle Bits
     };
 
 public:
@@ -30,6 +30,10 @@ public:
         Measure_200mV,
         Measure_2V,
         Measure_20V
+    };
+    struct IsolatorPins {
+        uint8_t control;
+        uint8_t disable;
     };
 
     DigitalVoltmeter();
@@ -50,8 +54,7 @@ private:
 
     AD7177 m_adc;
 
-    ShiftRegister m_range_muxes;
-    ShiftRegister m_autozero_mux;
+    ShiftRegister<uint16_t> m_muxes;
     RangeMuxes m_range_state;
 
     UART m_uart;
@@ -74,25 +77,24 @@ private:
     };
 
     // Pins
-    static constexpr ShiftRegister::Pins U23Pins = {
-        .strobe = 0,
-        .data = 1,
-        .clock = 2
-    };
-    static constexpr ShiftRegister::Pins U24Pins = {
-        .strobe = 3,
-        .data = 4,
-        .clock = 5
+    static constexpr ShiftRegister<uint16_t>::Pins MuxPins = {
+        .strobe = 9,
+        .data = 11,
+        .clock = 13
     };
     static constexpr AD7177::Pins ADCPins = {
-        .cs = 6,
-        .din = 7,
-        .dout = 8,
-        .sclk = 9
-    };
+        .cs = 8,
+        .din = 12,
+        .dout = 7,
+        .sclk = 10
+    }; // .error = ...
     static constexpr UART::Pins UartPins = {
-        .rx = 10,
-        .tx = 11
+        .rx = 25,
+        .tx = 24
+    };
+    static constexpr IsolatorPins IsolatorPins = {
+        .control = 5,
+        .disable = 6
     };
     static constexpr uint32_t UartBaudrate = 115200;
 };

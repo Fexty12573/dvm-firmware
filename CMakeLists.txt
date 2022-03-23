@@ -12,7 +12,6 @@ pico_sdk_init()
 add_executable(dvm_firmware
     src/main.cpp
     src/DigitalVoltmeter.cpp
-    src/ShiftRegister.cpp
     src/AD7177.cpp
     src/Communication.cpp
     src/UART.cpp
@@ -25,7 +24,11 @@ pico_add_extra_outputs(dvm_firmware)
 target_include_directories(dvm_firmware PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_link_libraries(dvm_firmware pico_stdlib pico_multicore hardware_sync)
+target_link_libraries(dvm_firmware
+    pico_stdlib
+    pico_multicore
+    hardware_sync
+)
 
 add_compile_options(
     -Wall

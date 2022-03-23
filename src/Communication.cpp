@@ -8,70 +8,41 @@
 
 void DigitalVoltmeter::communication() {
     auto& dvm = get();
-
-    const auto fill_command = [&dvm](UART::RxCommand cmd, char* buffer, size_t& count) -> bool {
-        switch (cmd) {
-        case UART::RxCommand::SetRangeMux: [[fallthrough]];
-        case UART::RxCommand::SetAutozero: [[fallthrough]];
-        case UART::RxCommand::SetRange:
-            if (count == 1) {
-                return true;
-            } else {
-                break;
-            }
-        case UART::RxCommand::SetRefVoltage:
-            if (count == 4) {
-                return true;
-            } else {
-                break;
-            }
-        }
-
-        buffer[count] = dvm.m_uart.read_char();
-        count++;
-        return false;
-    };
-    const auto exec_command = [&dvm](UART::RxCommand cmd, char* buffer) {
-        switch (cmd) {
-        case UART::RxCommand::SetRangeMux:
-            dvm.m_range_state.value = buffer[0];
-            dvm.apply_range();
-            break;
-        case UART::RxCommand::SetAutozero:
-            dvm.set_autozero(buffer[0]);
-            break;
-        case UART::RxCommand::SetRange:
-            dvm.set_range(static_cast<Range>(buffer[0]));
-            break;
-        case UART::RxCommand::SetRefVoltage:
-            dvm.m_vref = *reinterpret_cast<float*>(buffer);
-        }
-    };
     
-    bool reading_command = false;
-    UART::RxCommand current_cmd = static_cast<UART::RxCommand>(-1);
-
     char command_buffer[8] = { 0 };
-    size_t command_count = 0;
 
     while (true) {
         if (dvm.m_uart.has_tx_data()) {
-            if (reading_command) {
-                if (fill_command(current_cmd, command_buffer, command_count)) {
-                    reading_command = false;
-                    exec_command(current_cmd, command_buffer);
-                }
-            } else {
-                current_cmd = dvm.m_uart.read_command();
-                reading_command = true;
-                command_count = 0;
-                *reinterpret_cast<uint64_t*>(command_buffer) = 0ULL; // Clear Buffer
-            }
+            const UART::RxCommand cmd = dvm.m_uart.read_command();
+
+            switch (cmd) {
+                case UART::RxCommand::SetRangeMux:
+                    if (dvm.m_uart.read_str_blocking(command_buffer, 1, 100 * 1000)) {
+                        dvm.m_range_state.value = command_buffer[0];
+                        dvm.apply_range();
+                    }
+                    break;
+                case UART::RxCommand::SetAutozero:
+                    if (dvm.m_uart.read_str_blocking(command_buffer, 1, 100 * 1000)) {
+                        dvm.set_autozero(command_buffer[0]);
+                    }
+                    break;
+                case UART::RxCommand::SetRange:
+                    if (dvm.m_uart.read_str_blocking(command_buffer, 1, 100 * 1000)) {
+                        dvm.set_range(static_cast<Range>(command_buffer[0]));
+                    }
+                    break;
+                case UART::RxCommand::SetRefVoltage:
+                    if (dvm.m_uart.read_str_blocking(command_buffer, 4, 100 * 1000)) {
+                        dvm.m_vref = *reinterpret_cast<float*>(command_buffer);
+                    }
+                    break;
+            }            
         }
 
         if (!dvm.m_values.empty()) {
             spin_lock_unsafe_blocking(dvm.m_spinlock);
-            
+
             float value = dvm.m_values.front();
             dvm.m_values.pop();
             spin_unlock_unsafe(dvm.m_spinlock);

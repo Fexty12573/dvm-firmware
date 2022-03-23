@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-UART::UART(Pins pins) : m_pins(pins), m_inst(uart0) {
+UART::UART(Pins pins) : m_pins(pins), m_inst(uart1) {
 }
 
 void UART::initialize(uint32_t baudrate) {
@@ -37,6 +37,27 @@ size_t UART::read_str(char* buffer, size_t size) const {
     return count;
 }
 
+bool UART::read_str_blocking(char* buffer, size_t count, uint64_t timeout_us) const {
+    if (timeout_us != -1) {
+        absolute_time_t t = time_us_64() + timeout_us;
+
+        for (size_t i = 0; i < count; ++i) {
+            while (!uart_is_readable(m_inst)) {
+                if (time_reached(t))
+                    return false;
+
+                tight_loop_contents();
+            }
+
+            *buffer++ = static_cast<uint8_t>(uart_get_hw(m_inst)->dr);
+        }
+    } else {
+        uart_read_blocking(m_inst, reinterpret_cast<uint8_t*>(buffer), count);
+    }
+
+    return true;
+}
+
 float UART::read_float() const {
     float val = 0;
     const auto n = read_str(reinterpret_cast<char*>(&val), sizeof(val));
@@ -50,7 +71,7 @@ void UART::write_command(TxCommand cmd) const {
     }
 }
 
-void UART::write_str(char* buffer, size_t size) const {
+void UART::write_str(const char* buffer, size_t size) const {
     if (uart_is_writable(m_inst)) {
         for (auto i = 0u; i < size; i++) {
             uart_putc_raw(m_inst, buffer[i]);

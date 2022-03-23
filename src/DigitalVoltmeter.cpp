@@ -6,8 +6,7 @@
 #include <pico/multicore.h>
 
 DigitalVoltmeter::DigitalVoltmeter()
-    : m_range_muxes(U23Pins)
-    , m_autozero_mux(U24Pins)
+    : m_muxes(MuxPins)
     , m_autozero(false)
     , m_range(Range::Measure_200mV)
     , m_adc(ADCPins)
@@ -25,11 +24,13 @@ DigitalVoltmeter& DigitalVoltmeter::get() {
 }
 
 bool DigitalVoltmeter::initialize() {
-    this->set_range(Range::Measure_2V);
-    m_adc.initialize();
+    // this->set_range(Range::Measure_2V);
+    // m_adc.initialize();
     m_uart.initialize(UartBaudrate);
 
     multicore_launch_core1(DigitalVoltmeter::communication);
+
+    return true;
 }
 
 
@@ -100,21 +101,29 @@ void DigitalVoltmeter::set_autozero(bool enabled) {
     if (m_autozero != enabled) {
         m_autozero = enabled;
 
-        uint8_t value = m_autozero ? 0b0110 : 0b1001;
+        uint16_t autozero_value = m_autozero ? 0b0110 : 0b1001;
+        uint16_t value = (autozero_value << 8) | static_cast<uint16_t>(m_range_state.value);
 
-        m_autozero_mux.shift_out(0, ShiftOrder::LSBFirst);
-        m_autozero_mux.set_data();
+        m_muxes.shift_out(static_cast<uint16_t>(m_range_state.value), ShiftOrder::MSBFirst);
+        m_muxes.set_data();
 
         sleep_ms(10); // Artificial delay to allow muxes to switch
-        m_autozero_mux.shift_out(value, ShiftOrder::LSBFirst);
-        m_autozero_mux.set_data();
+        m_muxes.shift_out(value, ShiftOrder::MSBFirst);
+        m_muxes.set_data();
     }
 }
 
 void DigitalVoltmeter::apply_range() const {
     if (!m_autozero) {
-        m_range_muxes.shift_out(m_range_state.value, ShiftOrder::MSBFirst);
-        m_range_muxes.set_data();
+        uint16_t autozero_value = m_autozero ? 0b0110 : 0b1001;
+        uint16_t value = (autozero_value << 8) | static_cast<uint16_t>(m_range_state.value);
+        
+        m_muxes.shift_out(static_cast<uint16_t>(m_range_state.value), ShiftOrder::MSBFirst);
+        m_muxes.set_data();
+
+        sleep_ms(10); // Artificial delay to allow muxes to switch
+        m_muxes.shift_out(value, ShiftOrder::MSBFirst);
+        m_muxes.set_data();
     }
 }
 
