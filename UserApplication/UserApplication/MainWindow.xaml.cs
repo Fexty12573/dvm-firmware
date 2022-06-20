@@ -171,23 +171,29 @@ namespace UserApplication
             {
                 if (_serialPort != null && _serialPort.IsOpen)
                 {
-                    if (_serialPort.BytesToRead >= 5)
+                    if (_serialPort.BytesToRead >= 9)
                     {
-                        byte[] data = new byte[5];
+                        byte[] data = new byte[9];
                         _serialPort.Read(data, 0, data.Length);
                         
                         if (data[0] == 0x00)
                         {
-                            float value = BitConverter.ToSingle(data, 1);
-                            Voltage.Text = value.ToString();
+                            var value = BitConverter.ToDouble(data, 1);
+                            Dispatcher.Invoke(() =>
+                            {
+                                Voltage.Text = value.ToString() + "V";
+                            });
 
                             string output = $"[{GetTimestamp(DateTime.Now)}] {value}";
 
                             Console.WriteLine(output);
-                            if (SaveValuesInFile.IsChecked == true)
+                            Dispatcher.Invoke(() =>
                             {
-                                writer.WriteLine(output);
-                            }
+                                if (SaveValuesInFile.IsChecked == true)
+                                {
+                                    writer.WriteLine(output);
+                                }
+                            });
                         }
                     }
                 }

@@ -48,7 +48,7 @@ public:
 
 private:
     void apply_range() const;
-    float convert_to_volts(uint32_t adc_value) const;
+    double convert_to_volts(uint32_t adc_value) const;
 
     static void communication();
 
@@ -67,13 +67,14 @@ private:
     int32_t m_spinlock_num;
     spin_lock_t* m_spinlock;
 
-    std::queue<float> m_values;
+    std::queue<double> m_values;
+    std::queue<uint32_t> m_raw_values;
 
     float m_vref = 2.5f;
     float m_gains[3] = {
-        0.2f,
-        2.0f,
-        20.0f
+        0.1f,
+        1.0f,
+        10.0f
     };
 
     // Pins
@@ -89,8 +90,8 @@ private:
         .sclk = 10
     }; // .error = ...
     static constexpr UART::Pins UartPins = {
-        .rx = 25,
-        .tx = 24
+        .rx = 1,
+        .tx = 0
     };
     static constexpr IsolatorPins IsolatorPins = {
         .control = 5,

@@ -14,7 +14,8 @@ public:
     };
 
     enum class TxCommand : uint8_t {
-        AdcValue = 0x00
+        AdcValue = 0x00,
+        Message = 0x01
     };
 
     enum class RxCommand : uint8_t {
@@ -36,11 +37,14 @@ public:
     size_t read_str(char* buffer, size_t size) const;
     bool read_str_blocking(char* buffer, size_t count, uint64_t timout_us = -1) const;
     float read_float() const;
+    double read_double() const;
 
     // Write Functions
     void write_command(TxCommand cmd) const;
     void write_str(const char* buffer, size_t size) const;
+    void write_int(uint32_t val) const;
     void write_float(float val) const;
+    void write_double(double val) const;
 
 private:
     uart_inst_t* m_inst;

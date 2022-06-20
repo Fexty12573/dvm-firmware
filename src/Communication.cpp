@@ -43,12 +43,14 @@ void DigitalVoltmeter::communication() {
         if (!dvm.m_values.empty()) {
             spin_lock_unsafe_blocking(dvm.m_spinlock);
 
-            float value = dvm.m_values.front();
+            double value = dvm.m_values.front();
+            uint32_t raw_value = dvm.m_raw_values.front();
             dvm.m_values.pop();
+            dvm.m_raw_values.pop();
             spin_unlock_unsafe(dvm.m_spinlock);
 
             dvm.m_uart.write_command(UART::TxCommand::AdcValue);
-            dvm.m_uart.write_float(value);
+            dvm.m_uart.write_double(value);
         }
     }
 }

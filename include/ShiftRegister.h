@@ -50,19 +50,22 @@ void ShiftRegister<T>::shift_out(T data, ShiftOrder order) const {
     auto data_pin = m_pins.data;
 
     const uint8_t bit_count = sizeof(T) * 8;
+    T msb = 1U << (bit_count - 1U);
 
-    if (order == ShiftOrder::MSBFirst) {
+    if (order == ShiftOrder::LSBFirst) {
         for (auto i = 0; i < bit_count; i++, data >>= 1) {
-            gpio_put(data_pin, data & 1);
-
+            gpio_put(data_pin, data & 1U);
+            sleep_us(10);
             gpio_put(clk_pin, true);
+            sleep_us(10);
             gpio_put(clk_pin, false);
         }
-    } else if (order == ShiftOrder::LSBFirst) {
+    } else if (order == ShiftOrder::MSBFirst) {
         for (auto i = 0; i < bit_count; i++, data <<= 1) {
-            gpio_put(data_pin, data & 0x80);
-
+            gpio_put(data_pin, data & msb);
+            sleep_us(10);
             gpio_put(clk_pin, true);
+            sleep_us(10);
             gpio_put(clk_pin, false);
         }
     }
@@ -71,7 +74,9 @@ void ShiftRegister<T>::shift_out(T data, ShiftOrder order) const {
 template<class T>
 void ShiftRegister<T>::set_data() const {
     gpio_put(m_pins.strobe, true);
+    sleep_us(10);
     gpio_put(m_pins.strobe, false);
+    sleep_us(10);
 }
 
 #endif // INCLUDE_SHIFT_REGISTER

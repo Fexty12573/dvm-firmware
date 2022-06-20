@@ -6,7 +6,7 @@
 int main() {
     auto& dvm = DigitalVoltmeter::get();
 
-    dvm.initialize();
+    if (!dvm.initialize()) {}
     
     while (true) {
         dvm.update();

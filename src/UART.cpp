@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-UART::UART(Pins pins) : m_pins(pins), m_inst(uart1) {
+UART::UART(Pins pins) : m_pins(pins), m_inst(uart0) {
 }
 
 void UART::initialize(uint32_t baudrate) {
@@ -62,7 +62,14 @@ float UART::read_float() const {
     float val = 0;
     const auto n = read_str(reinterpret_cast<char*>(&val), sizeof(val));
 
-    return n == sizeof(val) ? val : NAN;
+    return n == sizeof(val) ? val : nanf("");
+}
+
+double UART::read_double() const {
+    double val = 0.0;
+    const auto n = read_str(reinterpret_cast<char*>(&val), sizeof(val));
+
+    return n == sizeof(val) ? val : nan("");    
 }
 
 void UART::write_command(TxCommand cmd) const {
@@ -83,3 +90,10 @@ void UART::write_float(float val) const {
     write_str(reinterpret_cast<char*>(&val), sizeof(val));
 }
 
+void UART::write_int(uint32_t val) const {
+    write_str(reinterpret_cast<char*>(&val), sizeof(val));
+}
+
+void UART::write_double(double val) const {
+    write_str(reinterpret_cast<char*>(&val), sizeof(val));
+}

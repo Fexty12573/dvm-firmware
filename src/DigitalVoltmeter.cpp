@@ -13,9 +13,6 @@ DigitalVoltmeter::DigitalVoltmeter()
     , m_autozero_code(0)
     , m_has_autozero_code(false)
     , m_uart(UartPins) {
-
-    m_spinlock_num = spin_lock_claim_unused(true);
-    m_spinlock = spin_lock_init(m_spinlock_num);
 }
 
 DigitalVoltmeter& DigitalVoltmeter::get() {
@@ -24,9 +21,19 @@ DigitalVoltmeter& DigitalVoltmeter::get() {
 }
 
 bool DigitalVoltmeter::initialize() {
-    // this->set_range(Range::Measure_2V);
-    // m_adc.initialize();
+    this->set_range(Range::Measure_2V);
+    m_adc.initialize();
     m_uart.initialize(UartBaudrate);
+
+    gpio_init(IsolatorPins.control);
+    gpio_init(IsolatorPins.disable);
+    gpio_set_dir(IsolatorPins.control, true);
+    gpio_set_dir(IsolatorPins.disable, true);
+    gpio_put(IsolatorPins.control, true);
+    gpio_put(IsolatorPins.disable, false);
+
+    m_spinlock_num = spin_lock_claim_unused(true);
+    m_spinlock = spin_lock_init(m_spinlock_num);
 
     multicore_launch_core1(DigitalVoltmeter::communication);
 
@@ -37,12 +44,15 @@ bool DigitalVoltmeter::initialize() {
 void DigitalVoltmeter::update() {
     // Read ADC and transmit data
     // Adjust range based on voltage read
-
+    static const char bruh[] = "balls\n";
+    // m_uart.write_str(bruh, sizeof(bruh));
     if (m_adc.data_ready()) {
-        // Read value from ADC
+        // m_uart.write_command(UART::TxCommand::Message);
+        // m_uart.write_int(sizeof(bruh));
+        // m_uart.write_str("adc wert!!!!! :O pog\n", 21);
+
         const auto val = m_adc.read_data();
         
-        // Convert to Volts
         float voltage = convert_to_volts(val);
 
         if (m_autozero) {
@@ -52,6 +62,7 @@ void DigitalVoltmeter::update() {
 
         spin_lock_unsafe_blocking(m_spinlock);
         m_values.push(voltage);
+        m_raw_values.push(val);
         spin_unlock_unsafe(m_spinlock);
     }
 }
@@ -101,13 +112,13 @@ void DigitalVoltmeter::set_autozero(bool enabled) {
     if (m_autozero != enabled) {
         m_autozero = enabled;
 
-        uint16_t autozero_value = m_autozero ? 0b0110 : 0b1001;
+        uint16_t autozero_value = m_autozero ? 0b01100000 : 0b10010000;
         uint16_t value = (autozero_value << 8) | static_cast<uint16_t>(m_range_state.value);
 
         m_muxes.shift_out(static_cast<uint16_t>(m_range_state.value), ShiftOrder::MSBFirst);
         m_muxes.set_data();
 
-        sleep_ms(10); // Artificial delay to allow muxes to switch
+        sleep_ms(1); // Artificial delay to allow muxes to switch
         m_muxes.shift_out(value, ShiftOrder::MSBFirst);
         m_muxes.set_data();
     }
@@ -115,32 +126,30 @@ void DigitalVoltmeter::set_autozero(bool enabled) {
 
 void DigitalVoltmeter::apply_range() const {
     if (!m_autozero) {
-        uint16_t autozero_value = m_autozero ? 0b0110 : 0b1001;
+        uint16_t autozero_value = m_autozero ? 0b01100000 : 0b10010000;
         uint16_t value = (autozero_value << 8) | static_cast<uint16_t>(m_range_state.value);
         
-        m_muxes.shift_out(static_cast<uint16_t>(m_range_state.value), ShiftOrder::MSBFirst);
+        m_muxes.shift_out(0U, ShiftOrder::MSBFirst);
         m_muxes.set_data();
 
-        sleep_ms(10); // Artificial delay to allow muxes to switch
+        sleep_ms(1); // Artificial delay to allow muxes to switch
         m_muxes.shift_out(value, ShiftOrder::MSBFirst);
         m_muxes.set_data();
     }
 }
 
-float DigitalVoltmeter::convert_to_volts(uint32_t adc_value) const {
+double DigitalVoltmeter::convert_to_volts(uint32_t adc_value) const {
     // Code = 2^(N - 1) * ((AIN / VREF) + 1)
     // AIN = VREF((Code / 2^31) - 1)
     // AIN = VREF((Code - 2^31) / 2^31)
 
-    bool negative = !(adc_value & 0x80000000);
     constexpr uint32_t two_pow_31 = 0x80000000; // 2^(32 - 1)
-
     if (m_has_autozero_code) {
         adc_value = adc_value - m_autozero_code + two_pow_31 - 1;
     }
     
-    auto voltage = ((static_cast<float>(adc_value) - two_pow_31) / two_pow_31) * m_vref;
+    double voltage = ((static_cast<double>(adc_value) - two_pow_31) / two_pow_31) * m_vref;
     voltage *= m_gains[static_cast<int>(m_range)];
 
-    return negative ? -voltage : voltage;
+    return voltage;
 }
