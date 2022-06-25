@@ -37,7 +37,17 @@ void DigitalVoltmeter::communication() {
                         dvm.m_vref = *reinterpret_cast<float*>(command_buffer);
                     }
                     break;
-            }            
+                case UART::RxCommand::SetGain:
+                    if (dvm.m_uart.read_str_blocking(command_buffer, 5, 100 * 1000)) {
+                        const auto range = *reinterpret_cast<DigitalVoltmeter::Range*>(command_buffer);
+                        const float gain = *reinterpret_cast<float*>(command_buffer + 1);
+
+                        dvm.set_gain(range, gain);
+                    }
+            }
+
+            // Clear command buffer
+            *reinterpret_cast<uint64_t*>(command_buffer) = 0;
         }
 
         if (!dvm.m_values.empty()) {

@@ -124,6 +124,13 @@ void DigitalVoltmeter::set_autozero(bool enabled) {
     }
 }
 
+void DigitalVoltmeter::set_gain(Range range, float gain) {
+    const auto index = static_cast<uint8_t>(range);
+    if (index < 3) {
+        m_gains[index] = gain;
+    }
+}
+
 void DigitalVoltmeter::apply_range() const {
     if (!m_autozero) {
         uint16_t autozero_value = m_autozero ? 0b01100000 : 0b10010000;

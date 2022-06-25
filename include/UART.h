@@ -22,7 +22,8 @@ public:
         SetRangeMux = 0x00,
         SetAutozero = 0x01,
         SetRange = 0x02,
-        SetRefVoltage = 0x03
+        SetRefVoltage = 0x03,
+        SetGain = 0x04
     };
 
     UART(Pins pins);

@@ -26,7 +26,7 @@ class DigitalVoltmeter {
     };
 
 public:
-    enum class Range {
+    enum class Range : uint8_t {
         Measure_200mV,
         Measure_2V,
         Measure_20V
@@ -45,6 +45,7 @@ public:
 
     void set_range(Range range);
     void set_autozero(bool enabled);
+    void set_gain(Range range, float gain);
 
 private:
     void apply_range() const;
