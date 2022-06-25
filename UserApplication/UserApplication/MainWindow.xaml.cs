@@ -208,6 +208,38 @@ namespace UserApplication
         [DllImport("Kernel32")]
         private static extern void FreeConsole();
 
-        
+        private void SetGains_Click(object sender, RoutedEventArgs e)
+        {
+            if (_serialPort == null)
+                return;
+
+            float[] gains = new float[3] { 0, 0, 0 };
+
+            if (!float.TryParse(GainFactor200mV.Text, out gains[0]))
+            {
+                MessageBox.Show("Invalid Gain factor for 200mV Range Gain", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (!float.TryParse(GainFactor200mV.Text, out gains[1]))
+            {
+                MessageBox.Show("Invalid Gain factor for 2V Range Gain", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (!float.TryParse(GainFactor200mV.Text, out gains[2]))
+            {
+                MessageBox.Show("Invalid Gain factor for 20V Range Gain", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            for (byte i = 0; i < gains.Length; i++)
+            {
+                byte[] cmd = new byte[2] { 0x04, i }; // 0x04 is SetGain, i is the range
+                var command = cmd.Concat(BitConverter.GetBytes(gains[i])).ToArray()!;
+
+                _serialPort.Write(command, 0, command.Length);
+            }
+        }
     }
 }

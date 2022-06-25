@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:UserApplication"
         mc:Ignorable="d"
-        Title="DVM Usersoftware" Height="448" Width="457" FontSize="16">
+        Title="DVM Usersoftware" Height="448" Width="497" FontSize="16">
     <Grid>
         <Grid.Resources>
             <Style TargetType="Label">
@@ -108,16 +108,28 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
                 <ComboBox Grid.Row="0" Grid.ColumnSpan="2" Name="RangeSelector" Margin="5" SelectionChanged="RangeSelector_SelectionChanged"/>
                 <TextBox Grid.Row="1" Grid.ColumnSpan="2" Name="RefVoltage" Margin="5,2,5,2"/>
                 <Button Grid.Row="2" Grid.ColumnSpan="3" Name="SetRefVoltage" Margin="5" Content="Set Ref Voltage" Click="SetRefVoltage_Click"/>
-                <Button Grid.Row="3" Grid.ColumnSpan="3" Name="SetAutoZeroButton" Content="Autozero" Margin="5" Click="SetAutoZeroButton_Click"/>
-                <CheckBox Grid.Row="4" Grid.ColumnSpan="3" Name="SaveValuesInFile" Content="Store Values in File" Margin="5"/>
+                <TextBox Grid.Row="3" Grid.ColumnSpan="2" Text="0.1" Name="GainFactor200mV" Margin="5,2,5,2"/>
+                <TextBox Grid.Row="4" Grid.ColumnSpan="2" Text="1" Name="GainFactor2V" Margin="5,2,5,2"/>
+                <TextBox Grid.Row="5" Grid.ColumnSpan="2" Text="10" Name="GainFactor20V" Margin="5,2,5,2"/>
+                <Button Grid.Row="6" Grid.ColumnSpan="3" Name="SetGains" Margin="5" Content="Set Gains" Click="SetGains_Click"/>
+                <Button Grid.Row="7" Grid.ColumnSpan="3" Name="SetAutoZeroButton" Content="Autozero" Margin="5" Click="SetAutoZeroButton_Click" IsEnabled="False"/>
+                <CheckBox Grid.Row="8" Grid.ColumnSpan="3" Name="SaveValuesInFile" Content="Store Values in File" Margin="5"/>
 
                 <Label Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" Content="Range"/>
                 <Label Grid.Row="1" Grid.Column="2" HorizontalAlignment="Left" Content="[V] Ref"/>
+                <Label Grid.Row="3" Grid.Column="2" HorizontalAlignment="Left" Content="200mV Gain"/>
+                <Label Grid.Row="4" Grid.Column="2" HorizontalAlignment="Left" Content="2V Gain"/>
+                <Label Grid.Row="5" Grid.Column="2" HorizontalAlignment="Left" Content="20V Gain"/>
             </Grid>
         </StackPanel>
         
